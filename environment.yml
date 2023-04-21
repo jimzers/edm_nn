@@ -1,0 +1,10 @@
+name: edm_nn
+
+dependencies:
+  - python=3.9
+  - pytorch
+  - torchvision
+  - conda-forge::jupyter
+  - conda-forge::pip
+  - pip:
+      - "pyEDM"
