@@ -1,4 +1,8 @@
 *.pyc
 
+src/data/
+src/notebooks/data/
+*.ckpt
+
 .idea/
 

@@ -1,0 +1,36 @@
+# config file for training mnist
+# --------------------------------
+run_name: mnist_mlp
+
+# place to save the results
+save_dir: ./results/mnist/mlp
+
+model:
+  # place to save the model
+  model_save_dir: ./results/mnist/mlp/model
+  model_type: mlp
+  input_size: 784
+  hidden_sizes: [256,256]
+  output_size: 10
+  loss_fn: cross_entropy
+  activation: relu
+  final_activation: softmax
+
+# data parameters
+data:
+  dataset_name: fashion_mnist
+  data_dir: ./data
+  shuffle_train: true
+  shuffle_test: false
+  num_workers: 4
+  flatten: true
+
+# training parameters
+training:
+  batch_size: 256
+  epochs: 5
+  lr: 0.001
+
+# logging parameters
+logging:
+  record_activations: true

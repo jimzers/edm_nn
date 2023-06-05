@@ -1,10 +1,19 @@
 name: edm_nn
 
+channels:
+  - pytorch
+  - conda-forge
+
 dependencies:
   - python=3.9
   - pytorch
   - torchvision
+  - cpuonly
+  - conda-forge::lightning
+  - conda-forge::torchmetrics
   - conda-forge::jupyter
+  - conda-forge::pyyaml
   - conda-forge::pip
   - pip:
-      - "pyEDM"
+      - pyEDM
+      - wandb
