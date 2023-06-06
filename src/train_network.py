@@ -72,30 +72,35 @@ if __name__ == "__main__":
     else:
         raise NotImplementedError(f"Model {model_params['model_type']} not implemented.")
 
-    # set up logging
-    wandb_logger = WandbLogger(log_model="all", project=logging_params["wandb_project"], name=run_name)
-
     # load callbacks
     callbacks = []
+
+    if logging_params["use_wandb"]:
+
+        # set up logging
+        wandb_logger = WandbLogger(log_model="all", project=logging_params["wandb_project"], name=run_name)
+
+        # save model checkpoints
+        if logging_params["save_checkpoints"]:
+            checkpoint_callback = ModelCheckpoint(monitor='val_accuracy', mode='max')
+
+        if logging_params["log_predictions"]:
+            callbacks.append(LogPredictionsCallback(wandb_logger))
+
     # if logging_params["record_activations"]:
     #     callbacks.append(ActivationRecordingCallback())
-
-    # save model checkpoints
-    if logging_params["save_checkpoints"]:
-        checkpoint_callback = ModelCheckpoint(monitor='val_accuracy', mode='max')
-
-    if logging_params["log_predictions"]:
-        callbacks.append(LogPredictionsCallback(wandb_logger))
 
     # train model
     trainer = Trainer(
         max_epochs=training_params["epochs"],
         default_root_dir=model_save_dir,
         callbacks=callbacks,
-        logger=wandb_logger,
+        logger=None if not logging_params["use_wandb"] else wandb_logger,
     )
-    # log gradients and model topology
-    wandb_logger.watch(model, log="all", log_freq=1)
+
+    if logging_params["use_wandb"]:
+        # log gradients and model topology
+        wandb_logger.watch(model, log="all", log_freq=1)
 
     trainer.fit(model, train_loader, test_loader)
 

@@ -15,7 +15,7 @@ def load_dataset(
         shuffle_train: Optional[bool] = True,
         shuffle_test: Optional[bool] = False,
         num_workers: Optional[int] = 1,
-        flatten: Optional[bool] = True,
+        flatten: Optional[bool] = False,
 ):
     """
     Loads the dataset.
@@ -40,9 +40,7 @@ def load_dataset(
 
     transform_fn = torchvision.transforms.Compose(transform_arr)
 
-
     if dataset_name == 'mnist':
-
 
         # Load MNIST dataset
         train_dataset = torchvision.datasets.MNIST(root=data_dir, train=True,
@@ -55,18 +53,12 @@ def load_dataset(
 
     elif dataset_name == 'fashion_mnist':
 
-        # send to tensor, then flatten
-        transform_arr = torchvision.transforms.Compose([
-            torchvision.transforms.ToTensor(),
-            torchvision.transforms.Lambda(lambda x: x.view(-1))
-        ])
-
         # Load Fashion MNIST dataset
         train_dataset = torchvision.datasets.FashionMNIST(root=data_dir, train=True,
-                                                          transform=transform_arr,
+                                                          transform=transform_fn,
                                                           download=True)
         test_dataset = torchvision.datasets.FashionMNIST(root=data_dir, train=False,
-                                                         transform=transform_arr,
+                                                         transform=transform_fn,
                                                          download=True)
 
 

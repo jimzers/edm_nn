@@ -3,10 +3,12 @@ Networks
 """
 
 # imports
+import functools
 from typing import Sequence, Tuple, Callable, Text
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torchmetrics.functional import accuracy
 import pytorch_lightning as pl
 from torch.optim.optimizer import Optimizer
 
@@ -23,22 +25,26 @@ class MLPNet(pl.LightningModule):
         activation: activation function
         lr: learning rate
     """
+
     def __init__(
-        self,
-        input_size: int,
-        hidden_sizes: Sequence[int],
-        output_size: int,
-        loss_fn: Text,
-        # activation: Callable[[torch.Tensor], torch.Tensor] = F.relu,
-        # final_activation: Callable[[torch.Tensor], torch.Tensor] = F.softmax,
-        activation: Text = "relu",
-        final_activation: Text = "identity",
-        lr: float = 0.001,
+            self,
+            input_size: int,
+            hidden_sizes: Sequence[int],
+            output_size: int,
+            loss_fn: Text,
+            # activation: Callable[[torch.Tensor], torch.Tensor] = F.relu,
+            # final_activation: Callable[[torch.Tensor], torch.Tensor] = F.softmax,
+            activation: Text = "relu",
+            final_activation: Text = "identity",
+            lr: float = 0.001,
+            is_image: bool = True,
     ):
         super(MLPNet, self).__init__()
         self.input_size = input_size
         self.hidden_sizes = hidden_sizes
         self.output_size = output_size
+
+        self.is_image = is_image
 
         # loss function
         if loss_fn == "cross_entropy":
@@ -48,10 +54,9 @@ class MLPNet(pl.LightningModule):
         else:
             raise NotImplementedError(f"Loss function {loss_fn} not implemented.")
 
-
         # final activation
         if final_activation == "softmax":
-            self.final_activation = F.softmax
+            self.final_activation = functools.partial(F.softmax, dim=-1)
         elif final_activation == "sigmoid":
             self.final_activation = F.sigmoid
         elif final_activation == "relu":
@@ -86,10 +91,15 @@ class MLPNet(pl.LightningModule):
         return nn.ModuleList(layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # Flatten image
+        if self.is_image:
+            x = x.view(x.size(0), -1)
+
         # should call each layer with activation except for last layer
         for layer in self.fc_layers[:-1]:
             x = self.activation(layer(x))
         x = self.fc_layers[-1](x)
+        x = self.final_activation(x)
         return x
 
     def configure_optimizers(self) -> Optimizer:
@@ -97,28 +107,40 @@ class MLPNet(pl.LightningModule):
         return optimizer
 
     def training_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
+            self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
     ) -> torch.Tensor:
-        inputs, targets = batch
-        outputs = self.forward(inputs)
-        loss = self.loss_fn(outputs, targets)
-        self.log("train_loss", loss)
+        outputs, preds, loss, acc = self._get_preds_loss_accuracy(batch)
+
+        # Log loss and metric
+        self.log('train_loss', loss)
+        self.log('train_accuracy', acc)
         return loss
 
     def validation_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
+            self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
     ) -> torch.Tensor:
-        inputs, targets = batch
-        outputs = self.forward(inputs)
-        loss = self.loss_fn(outputs, targets)
-        self.log("val_loss", loss)
-        return loss
+        outputs, preds, loss, acc = self._get_preds_loss_accuracy(batch)
+
+        # Log loss and metric
+        self.log('val_loss', loss)
+        self.log('val_accuracy', acc)
+        return preds
 
     def test_step(
-        self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
+            self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
     ) -> torch.Tensor:
+        outputs, preds, loss, acc = self._get_preds_loss_accuracy(batch)
+
+        # Log loss and metric
+        self.log('test_loss', loss)
+        self.log('test_accuracy', acc)
+        return preds
+
+    def _get_preds_loss_accuracy(self, batch: Tuple[torch.Tensor, torch.Tensor]):
         inputs, targets = batch
         outputs = self.forward(inputs)
+        preds = torch.argmax(outputs, dim=1)
         loss = self.loss_fn(outputs, targets)
-        self.log("test_loss", loss)
-        return loss
+        acc = accuracy(outputs, targets, task="multiclass", num_classes=self.output_size)
+
+        return outputs, preds, loss, acc

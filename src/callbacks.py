@@ -22,7 +22,7 @@ from pytorch_lightning.callbacks import Callback
 
 class LogPredictionsCallback(Callback):
 
-    def __init__(self, wandb_logger, save_n=20, log_every=1):
+    def __init__(self, wandb_logger, save_n=20, log_every=256):
         """
         Callback to log predictions to wandb.
         Args:
@@ -35,8 +35,7 @@ class LogPredictionsCallback(Callback):
         self.save_n = save_n
         self.log_every = log_every
 
-    def on_validation_batch_end(
-            self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx):
+    def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx: int = 0):
         """Called when the validation batch ends."""
 
         # `outputs` comes from `LightningModule.validation_step`

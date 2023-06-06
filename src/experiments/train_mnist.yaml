@@ -35,4 +35,7 @@ training:
 # logging parameters
 logging:
   record_activations: true
+  use_wandb: true
   wandb_project: fashion_mnist_mlp
+  save_checkpoints: true
+  log_predictions: true
