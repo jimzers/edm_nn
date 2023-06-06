@@ -13,6 +13,7 @@ dependencies:
   - conda-forge::torchmetrics
   - conda-forge::jupyter
   - conda-forge::pyyaml
+  - conda-forge::h5py
   - conda-forge::pip
   - pip:
       - pyEDM
