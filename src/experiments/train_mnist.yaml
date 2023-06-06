@@ -3,11 +3,12 @@
 run_name: mnist_mlp
 
 # place to save the results
-save_dir: ./results/mnist/mlp
+save_dir: results
 
 model:
   # place to save the model
-  model_save_dir: ./results/mnist/mlp/model
+  model_save_dir: model
+  activations_save_dir: activations
   model_type: mlp
   input_size: 784
   hidden_sizes: [256,256]
@@ -28,9 +29,10 @@ data:
 # training parameters
 training:
   batch_size: 256
-  epochs: 5
+  epochs: 10
   lr: 0.001
 
 # logging parameters
 logging:
   record_activations: true
+  wandb_project: fashion_mnist_mlp

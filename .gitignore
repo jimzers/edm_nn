@@ -1,8 +1,13 @@
+# Byte-compiled / optimized / DLL files
 *.pyc
 
-src/data/
-src/notebooks/data/
+# deep learning data files / model files
 *.ckpt
+*wandb/
+*lightning_logs/
+*data/
 
+# IDE files
 .idea/
+.vscode/
 
