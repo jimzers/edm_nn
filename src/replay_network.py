@@ -8,12 +8,14 @@ python replay_network.py --config experiments/train_mnist.yaml --run_name mnist_
 import argparse
 import yaml
 import datetime
+import h5py
+import pathlib
 
 import torch
 
 from networks import MLPNet
 from datasets import load_dataset
-
+from callbacks import ActivationRecordingHook
 
 if __name__ == "__main__":
     # Parse arguments
@@ -37,6 +39,13 @@ if __name__ == "__main__":
     dataset_params = config["data"]
     training_params = config["training"]
     logging_params = config["logging"]
+
+    # set up saving directories
+    save_dir = pathlib.Path(save_dir)
+    run_dir = save_dir / run_name
+
+    model_save_dir = run_dir / model_params["model_save_dir"]
+    model_save_path = model_save_dir / (run_name + ".ckpt")
 
     # load dataset
     train_loader, test_loader = load_dataset(
@@ -63,11 +72,13 @@ if __name__ == "__main__":
         raise NotImplementedError(f"Model {model_params['model_type']} not implemented.")
 
     # load the model from a checkpoint file
-    checkpoint_path = model_params["model_save_dir"] + "/" + run_name + ".ckpt"
     model = model.load_from_checkpoint(
-        checkpoint_path,
+        model_save_path,
         **model_params,
     )
+
+    # setup the activation recording hook
+    activation_recording_hook = ActivationRecordingHook(model)
 
     model.eval()
     model.freeze()
@@ -86,3 +97,18 @@ if __name__ == "__main__":
     test_accuracy = 100. * correct / len(test_loader.dataset)
 
     print(f"Test loss: {test_loss:.4f}, Test accuracy: {test_accuracy:.2f}%")
+
+    # save the activations
+    activations_save_dir = run_dir / model_params["activations_save_dir"]
+    activations_save_dir.mkdir(parents=True, exist_ok=True)
+    activations_save_path = activations_save_dir / ("replay_activations" + ".h5")
+
+    activations = activation_recording_hook.activations
+    with h5py.File(activations_save_path, "w") as f:
+        # import ipdb; ipdb.set_trace()
+        for layer_name, layer_activations in activations.items():
+            if layer_name and len(layer_activations) > 0:
+                processed_activations = torch.cat(layer_activations, dim=0).cpu().numpy()
+                f.create_dataset(layer_name, data=processed_activations)
+
+    print(f"Saved activations to {activations_save_path}")

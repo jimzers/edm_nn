@@ -2,8 +2,11 @@
 Callbacks
 """
 
+import functools
+
 import wandb
 import torch
+import torch.nn as nn
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import Callback
 
@@ -59,11 +62,19 @@ class LogPredictionsCallback(Callback):
 
 class ActivationRecordingHook:
     def __init__(self, module):
-        self.hook = module.register_forward_hook(self.hook_fn)
-        self.activations = []
+        self.activations = {}
 
-    def hook_fn(self, module, input, output):
-        self.activations.append(output.detach().clone())
+        for name, module in module.named_modules():
+            self.activations[name] = []
+            self.hook = module.register_forward_hook(
+                functools.partial(self.hook_fn, name=name)
+            )
+
+    def hook_fn(self, module, input, output, name=None):
+        if name is not None:
+            self.activations[name].append(output.detach().clone())
+        else:
+            print("No name for module, not recording activations")
 
     def close(self):
         self.hook.remove()

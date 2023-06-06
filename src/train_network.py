@@ -106,3 +106,5 @@ if __name__ == "__main__":
 
     # save model
     trainer.save_checkpoint(model_save_path)
+
+    print("done training. saving to ", model_save_path)
