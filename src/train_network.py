@@ -12,7 +12,8 @@ import pathlib
 
 from networks import MLPNet
 from datasets import load_dataset
-from callbacks import ActivationRecordingHook, LogPredictionsCallback
+from callbacks import ActivationRecordingHook, LogPredictionsCallback, LogActivationsCallback, LogGradientsCallback, \
+    LogWeightGradientsCallback, LogWeightCallback
 
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import WandbLogger
@@ -75,6 +76,34 @@ if __name__ == "__main__":
     # load callbacks
     callbacks = []
 
+    if logging_params["record_activations"]:
+        activations_save_dir = run_dir / model_params["activations_save_dir"]
+        activations_save_dir.mkdir(parents=True, exist_ok=True)
+        activations_save_path = activations_save_dir / ("activations" + ".h5")
+
+        callbacks.append(LogActivationsCallback(activations_save_path))
+
+    if logging_params["record_gradients"]:
+        gradients_save_dir = run_dir / model_params["gradients_save_dir"]
+        gradients_save_dir.mkdir(parents=True, exist_ok=True)
+        gradients_save_path = gradients_save_dir / ("gradients" + ".h5")
+
+        callbacks.append(LogGradientsCallback(gradients_save_path))
+
+    if logging_params["record_weight_gradients"]:
+        weight_gradients_save_dir = run_dir / model_params["weights_save_dir"]
+        weight_gradients_save_dir.mkdir(parents=True, exist_ok=True)
+        weight_gradients_save_path = weight_gradients_save_dir / ("weight_gradients" + ".h5")
+
+        callbacks.append(LogWeightGradientsCallback(weight_gradients_save_path))
+
+    if logging_params["record_weight_gradients"]:
+        weights_save_dir = run_dir / model_params["weights_save_dir"]
+        weights_save_dir.mkdir(parents=True, exist_ok=True)
+        weights_save_path = weights_save_dir / ("weights" + ".h5")
+
+        callbacks.append(LogWeightCallback(weights_save_path))
+
     if logging_params["use_wandb"]:
 
         # set up logging
@@ -87,15 +116,13 @@ if __name__ == "__main__":
         if logging_params["log_predictions"]:
             callbacks.append(LogPredictionsCallback(wandb_logger))
 
-    # if logging_params["record_activations"]:
-    #     callbacks.append(ActivationRecordingCallback())
-
     # train model
     trainer = Trainer(
         max_epochs=training_params["epochs"],
         default_root_dir=model_save_dir,
         callbacks=callbacks,
         logger=None if not logging_params["use_wandb"] else wandb_logger,
+        log_every_n_steps=logging_params["log_every_n_steps"],
     )
 
     if logging_params["use_wandb"]:

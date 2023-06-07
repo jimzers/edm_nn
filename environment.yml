@@ -11,6 +11,8 @@ dependencies:
   - cpuonly
   - conda-forge::lightning
   - conda-forge::torchmetrics
+  - conda-forge::seaborn
+  - conda-forge::scikit-learn
   - conda-forge::jupyter
   - conda-forge::pyyaml
   - conda-forge::h5py

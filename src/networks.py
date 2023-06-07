@@ -112,8 +112,8 @@ class MLPNet(pl.LightningModule):
         outputs, preds, loss, acc = self._get_preds_loss_accuracy(batch)
 
         # Log loss and metric
-        self.log('train_loss', loss)
-        self.log('train_accuracy', acc)
+        self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True)
+        self.log('train_accuracy', acc, on_step=True, on_epoch=True, prog_bar=True)
         return loss
 
     def validation_step(
@@ -122,8 +122,8 @@ class MLPNet(pl.LightningModule):
         outputs, preds, loss, acc = self._get_preds_loss_accuracy(batch)
 
         # Log loss and metric
-        self.log('val_loss', loss)
-        self.log('val_accuracy', acc)
+        self.log('val_loss', loss, on_step=True, on_epoch=True, prog_bar=True)
+        self.log('val_accuracy', acc, on_step=True, on_epoch=True, prog_bar=True)
         return preds
 
     def test_step(
@@ -132,8 +132,8 @@ class MLPNet(pl.LightningModule):
         outputs, preds, loss, acc = self._get_preds_loss_accuracy(batch)
 
         # Log loss and metric
-        self.log('test_loss', loss)
-        self.log('test_accuracy', acc)
+        self.log('test_loss', loss, on_step=True, on_epoch=True, prog_bar=True)
+        self.log('test_accuracy', acc, on_step=True, on_epoch=True, prog_bar=True)
         return preds
 
     def _get_preds_loss_accuracy(self, batch: Tuple[torch.Tensor, torch.Tensor]):

@@ -9,6 +9,8 @@ model:
   # place to save the model
   model_save_dir: model
   activations_save_dir: activations
+  gradients_save_dir: gradients
+  weights_save_dir: weights
   model_type: mlp
   input_size: 784
   hidden_sizes: [256,256]
@@ -23,19 +25,23 @@ data:
   data_dir: ./data
   shuffle_train: true
   shuffle_test: false
-  num_workers: 4
-  flatten: true
+  num_workers: 16
+  flatten: false
 
 # training parameters
 training:
-  batch_size: 256
-  epochs: 20
+  batch_size: 128
+  epochs: 100
   lr: 0.0003
 
 # logging parameters
 logging:
   record_activations: true
-  use_wandb: true
+  record_gradients: true
+  record_weight_gradients: true
+  record_weights: true
+  use_wandb: false
+  log_every_n_steps: 1
   wandb_project: fashion_mnist_mlp
   save_checkpoints: true
   log_predictions: true
