@@ -328,14 +328,17 @@ class LogWeightCallback(Callback):
     Callback that records weights of the model during each validation batch.
     """
 
-    def __init__(self, h5_filepath):
+    def __init__(self, h5_filepath, granularity='batch'):
         """
         Args:
             h5_filepath: path to save weights to
+            granularity: 'batch' or 'epoch'
         """
         super(LogWeightCallback, self).__init__()
         self.h5_filepath = h5_filepath
         self.current_epoch = None
+        self.trainer_steps = None
+        self.granularity = granularity
 
     def on_sanity_check_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
         # delete previous weights by deleting the file
@@ -344,11 +347,25 @@ class LogWeightCallback(Callback):
 
     def on_train_epoch_start(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
         self.current_epoch = trainer.current_epoch
-        weights = record_weights(pl_module)
-        # write to h5 file
-        print(f"Saving training weights for epoch {self.current_epoch} to {self.h5_filepath}")
-        with h5py.File(self.h5_filepath, 'a') as f:
-            epoch_name = f'epoch_{self.current_epoch:03d}'
-            for layer_name, layer_weights in weights.items():
-                if layer_name:
-                    f.create_dataset(f'{epoch_name}/train/{layer_name}', data=layer_weights)
+        if self.granularity == 'epoch':
+            weights = record_weights(pl_module)
+            # write to h5 file
+            print(f"Saving training weights for epoch {self.current_epoch} to {self.h5_filepath}")
+            with h5py.File(self.h5_filepath, 'a') as f:
+                epoch_name = f'epoch_{self.current_epoch:03d}'
+                for layer_name, layer_weights in weights.items():
+                    if layer_name:
+                        f.create_dataset(f'{epoch_name}/train/{layer_name}', data=layer_weights)
+
+    def on_train_batch_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule", outputs, batch, batch_idx,
+                           dataloader_idx: int = 0) -> None:
+        self.trainer_steps = trainer.global_step
+        if self.granularity == 'batch':
+            weights = record_weights(pl_module)
+            # write to h5 file
+            print(f"Saving training weights for batch {self.trainer_steps} to {self.h5_filepath}")
+            with h5py.File(self.h5_filepath, 'a') as f:
+                batch_name = f'batch_{self.trainer_steps:07d}'
+                for layer_name, layer_weights in weights.items():
+                    if layer_name:
+                        f.create_dataset(f'{batch_name}/train/{layer_name}', data=layer_weights)

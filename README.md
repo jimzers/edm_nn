@@ -4,10 +4,29 @@ TODO:
 
 1. initial ML model (DONE)
 2. train mnist model (DONE)
-3. record activations (TODO)
-4. record weights at every step (TODO)
-5. record loss at every step (TODO)
+3. record activations (DONE)
+4. record weights at every step (DONE)
+5. record loss at every step (DONE)
 6. time series analysis (TODO)
+7. record more weights
+
+Behavioral / "kinematics" analysis:
+- PCA
+- PSD
+- tSNE + watershed clustering
+
+MotionMapper:
+1. decompose to PCA (dimensionality reduction, could use a different method but PCA is easy)
+(let's try PCA of dimension k=8)
+2. Morlet wavelet transform
+3. Normalization
+4. Map to tSNE
+5. Gaussian smoothed density
+5. Watershed transformation
+
+Correlation between variables:
+- ARIMA
+- CCM
 
 Needed for preliminary submission:
 
